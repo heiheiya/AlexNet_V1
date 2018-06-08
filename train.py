@@ -11,7 +11,7 @@ from alexnet import AlexNet
 image_size = 24
 channels = 3
 batch_size = 128
-num_epoches = 1000
+num_epoches = 1
 num_classes = 10
 train_batches_per_epoch = 1000
 test_batches_per_epoch = 500
@@ -37,18 +37,19 @@ keep_prob = tf.placeholder(tf.float32)
 model = AlexNet(image_holder, keep_prob, num_classes, batch_size)
 
 prediction = model.fc7
-
+print(prediction.shape)
 #label_holder = tf.cast(label_holder, tf.int64)
 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=prediction, labels=label_holder, name='cross_entropy_per_example')
 loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
+
 train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-#correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(label_holder, 1))
-#accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-top_k_op = tf.nn.in_top_k(prediction, label_holder, 1)
-format_str = ('epoch %d: step %d, loss=%.3f')
+correct_pred = tf.equal(tf.cast(tf.argmax(prediction, 1), tf.int32), label_holder)
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+#top_k_op = tf.nn.in_top_k(prediction, label_holder, 1)
+format_str = ('epoch %d: step %d, loss=%.3f, accuracy=%.3f')
 
 tf.summary.scalar('loss', loss)
-#tf.summary.scalar('accuracy', accuracy)
+tf.summary.scalar('accuracy', accuracy)
 merged_summary = tf.summary.merge_all()
 
 sess = tf.InteractiveSession()
@@ -72,10 +73,10 @@ for epoch in range(num_epoches):
         #train_acc += np.sum(acc)
         #train_count += 1
         if step % display_step == 0:
-            losses = sess.run(loss, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
+            acc, losses = sess.run([accuracy, loss], feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
             s = sess.run(merged_summary, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
             writer.add_summary(s, epoch * train_batches_per_epoch + step)
-            print(format_str % (epoch+1, step, losses))
+            print(format_str % (epoch+1, step, losses, acc))
     #train_acc /= train_count
     #print("{} Training Accuracy = {:.4f}".format(datetime.now(), train_acc))
 
@@ -84,15 +85,15 @@ for epoch in range(num_epoches):
     test_count = 0
     for _ in range(test_batches_per_epoch):
         image_batch, label_batch = sess.run([images_test, labels_test])
-        acc = sess.run(top_k_op, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
-        test_acc += np.sum(acc)
+        acc = sess.run(accuracy, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
+        test_acc += acc
         test_count += 1
     test_acc /= test_count
     print("{} Validation Accuracy = {:.4f}".format(datetime.now(), test_acc))
 
     print("{} Saving checkpoint of model...".format(datetime.now()))
 
-    checkpoint_name = os.path.join(checkpoint_path, 'model_epoch' + str(epoch+1) + '.ckpt')
+    checkpoint_name = os.path.join(checkpoint_path, 'model.ckpt')
     save_path = saver.save(sess, checkpoint_name)
 
     print("{} Epoch number: {} end".format(datetime.now(), epoch+1))

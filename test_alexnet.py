@@ -21,13 +21,12 @@ def test_image(filename, num_class, weights_path='Default'):
     saver = tf.train.Saver()
 
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        saver.restore(sess, "./tmp/checkpoint/model_epoch848.ckpt")
+        #sess.run(tf.global_variables_initializer())
+        saver.restore(sess, "./tmp/checkpoint/model.ckpt")
         prob = sess.run(max)[0]
-        print(prob)
         print(class_name[prob])
         #plt.imshow(img_decoded.eval())
         #plt.title("Class: " + class_name[prob])
         #plt.show()
 
-test_image("./test/00015.jpg", num_class=num_classes)
+test_image("./test/00000.jpg", num_class=num_classes)
