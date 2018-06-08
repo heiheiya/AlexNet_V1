@@ -10,11 +10,11 @@ from alexnet import AlexNet
 
 image_size = 24
 channels = 3
-batch_size = 100
-num_epoches = 10
+batch_size = 128
+num_epoches = 1000
 num_classes = 10
-train_batches_per_epoch = 5000
-test_batches_per_epoch = 1000
+train_batches_per_epoch = 1000
+test_batches_per_epoch = 500
 learning_rate = 1e-3
 dropout_rate = 0.5
 display_step = 10
@@ -63,21 +63,21 @@ print("{} Open Tensorboard at --logdir {}".format(datetime.now(), filewriter_pat
 
 for epoch in range(num_epoches):
     print("{} Epoch number: {} start".format(datetime.now(), epoch+1))
-    train_acc = 0
-    train_count = 0
+    #train_acc = 0
+    #train_count = 0
     for step in range(train_batches_per_epoch):
         image_batch, label_batch = sess.run([images_train, labels_train])
         sess.run(train_op, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: dropout_rate})
-        acc = sess.run(top_k_op, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
-        train_acc += np.sum(acc)
-        train_count += 1
+        #acc = sess.run(top_k_op, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
+        #train_acc += np.sum(acc)
+        #train_count += 1
         if step % display_step == 0:
             losses = sess.run(loss, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
             s = sess.run(merged_summary, feed_dict={image_holder: image_batch, label_holder: label_batch, keep_prob: 1.0})
             writer.add_summary(s, epoch * train_batches_per_epoch + step)
             print(format_str % (epoch+1, step, losses))
-    train_acc /= train_count
-    print("{} Training Accuracy = {:.4f}".format(datetime.now(), train_acc))
+    #train_acc /= train_count
+    #print("{} Training Accuracy = {:.4f}".format(datetime.now(), train_acc))
 
     print("{} Start validation".format(datetime.now()))
     test_acc = 0.
